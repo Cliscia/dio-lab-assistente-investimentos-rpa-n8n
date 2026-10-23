@@ -255,6 +255,12 @@ Nos testes locais, o workflow:
 - Executou automaticamente todos os nós, do Webhook à resposta final.
 - Retornou status HTTP `200` na requisição de teste.
 
+### Evidência de execução
+
+A imagem abaixo apresenta o workflow desenvolvido no n8n, com todos os nós executados com sucesso, desde o recebimento dos clientes pelo Webhook até a geração das recomendações personalizadas.
+
+![Execução completa do workflow n8n](docs/workflow.jpg)
+
 ### Limitações e melhorias futuras
 
 Esta versão utiliza dados ilustrativos e regras de negócio predefinidas. Não constitui aconselhamento financeiro individualizado.
