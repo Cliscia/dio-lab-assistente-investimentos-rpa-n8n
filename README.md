@@ -170,3 +170,93 @@ Conecte o Agente de IA do N8N a um modelo como Gemini ou GPT para:
 **Bons estudos e mãos à obra** 🚀
 
 Se tiver dúvidas, lembre-se: a melhor forma de aprender é experimentando. Erre, corrija e celebre cada pequena vitória no caminho.
+
+
+## Minha implementação do desafio
+
+### Visão geral
+
+Desenvolvi uma automação de análise de elegibilidade de investimentos utilizando Python, n8n e JavaScript.
+
+O projeto recebe dados de clientes, cruza seus perfis e saldos com uma base de produtos financeiros e gera mensagens personalizadas apresentando os investimentos compatíveis com os critérios definidos.
+
+A solução utiliza regras de negócio, sem integração com modelos de IA generativa nesta versão.
+
+### Tecnologias utilizadas
+
+- **Python:** extração e envio dos dados dos clientes.
+- **n8n:** orquestração e execução do workflow.
+- **JavaScript:** agrupamento dos investimentos e geração das mensagens personalizadas.
+- **Webhook HTTP:** comunicação entre Python e n8n.
+- **CSV:** armazenamento dos dados de exemplo dos investimentos.
+- **Docker:** execução local do n8n.
+
+### Funcionamento da automação
+
+O fluxo é composto pelas seguintes etapas:
+
+1. **Webhook:** recebe os dados enviados pelo script Python por meio de uma requisição POST.
+2. **Split Out:** separa os clientes para processamento.
+3. **Read/Write Files from Disk:** lê o arquivo CSV de investimentos.
+4. **Extract from File:** converte o conteúdo CSV em dados estruturados.
+5. **Merge:** combina os dados de clientes e investimentos.
+6. **Filter:** seleciona as combinações que atendem ao critério de investimento mínimo.
+7. **Code in JavaScript:** agrupa os investimentos por cliente e gera mensagens personalizadas conforme o perfil.
+8. **Edit Fields:** organiza os campos da resposta.
+9. **Respond to Webhook:** retorna os resultados em formato JSON.
+
+### Estrutura dos arquivos
+
+```text
+dio-lab-assistente-investimentos-rpa-n8n/
+├── docs/
+│   └── data.csv
+├── n8n/
+│   └── workflow.json
+├── rpa/
+│   ├── extrair_clientes.ipynb
+│   ├── extrair_clientes.py
+│   └── enviar_clientes.py
+└── README.md
+```
+
+### Como executar
+
+**Pré-requisitos:**
+- Python 3
+- Biblioteca `requests`
+- n8n em execução
+- Arquivo CSV de investimentos acessível ao n8n
+
+**Etapas:**
+
+1. Importe o arquivo `n8n/workflow.json` para o n8n.
+2. Configure o caminho do CSV no nó `Read/Write Files from Disk`, considerando o sistema de arquivos do ambiente onde o n8n está sendo executado.
+3. Confira a configuração do Webhook, utilizando o método POST e o caminho `Clientes`.
+4. No n8n, clique em `Execute workflow` para aguardar uma requisição de teste.
+5. Configure a URL do Webhook no script `rpa/enviar_clientes.py`, conforme a porta utilizada em seu ambiente.
+6. Execute o script:
+
+```bash
+python rpa/enviar_clientes.py
+```
+
+No ambiente utilizado durante o desenvolvimento, o n8n foi acessado pela porta `5679`.
+
+### Resultados obtidos
+
+Nos testes locais, o workflow:
+
+- Recebeu dados de 10 clientes.
+- Processou uma base de investimentos organizada por perfil.
+- Cruzou informações de saldo e investimento mínimo.
+- Agrupou os produtos elegíveis por cliente.
+- Gerou mensagens personalizadas conforme o perfil do investidor.
+- Executou automaticamente todos os nós, do Webhook à resposta final.
+- Retornou status HTTP `200` na requisição de teste.
+
+### Limitações e melhorias futuras
+
+Esta versão utiliza dados ilustrativos e regras de negócio predefinidas. Não constitui aconselhamento financeiro individualizado.
+
+Como melhorias futuras, estão previstas validações adicionais, tratamento de erros, testes automatizados e possível integração com IA generativa para aprimorar as mensagens.
