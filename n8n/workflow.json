@@ -1,0 +1,304 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "Clientes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ec1eba9f-4db2-444a-80a9-f82fcaea061d",
+      "name": "Webhook",
+      "webhookId": "ebb6fb06-45f5-4c4a-be14-98e86ec0f710"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.clientes",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        240,
+        48
+      ],
+      "id": "c838f23f-3d08-4f76-85c1-feec0eede9e2",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/files/data.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "231e2068-0cbc-4ba7-aa6b-b791f85d3ebf",
+      "name": "Read/Write Files from Disk",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        0
+      ],
+      "id": "53493e76-f5cd-4984-a670-c6955a27761f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "perfil",
+        "options": {
+          "multipleMatches": "all"
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        512,
+        240
+      ],
+      "id": "8e1e5882-02c6-4f98-a577-d4f3cfb81512",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "57fab852-4095-48aa-8829-1696f767c645",
+              "leftValue": "={{ Number(String($json.saldo).replace(/[^\\d,.-]/g, '').replace(/\\./g, '').replace(',', '.')) + 0.001 }}",
+              "rightValue": "={{ Number($json.minimo) }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        736,
+        240
+      ],
+      "id": "14a1ab41-3adb-4c99-bc1a-25eb190f10e2",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst itens = $input.all();\n\n// Objeto para agrupar os investimentos por cliente\nconst clientes = {};\n\nfor (const item of itens) {\n  const { nome, email, saldo, perfil, produto, minimo, rentabilidade } = item.json;\n\n  // Utiliza o email para identificar cada cliente\n  if (!clientes[email]) {\n    clientes[email] = {\n      nome,\n      email,\n      saldo,\n      perfil,\n      investimentos: []\n    };\n  }\n\n  // Adiciona cada investimento elegível ao cliente\n  clientes[email].investimentos.push({\n    produto,\n    minimo: Number(minimo),\n    rentabilidade\n  });\n}\n\n// Retorna um item por cliente com mensagem personalizada\nreturn Object.values(clientes).map(cliente => {\n\n  // Cria a lista dos produtos elegíveis\n  const produtos = cliente.investimentos\n    .map(investimento => investimento.produto)\n    .join(\", \");\n\n  // Define a mensagem conforme o perfil do cliente\n  const mensagens = {\n    Conservador: \"prioriza segurança e preservação do patrimônio\",\n    Moderado: \"busca equilíbrio entre segurança e rentabilidade\",\n    Arrojado: \"aceita maiores riscos em busca de rentabilidade\"\n  };\n\n  // Seleciona a descrição correspondente ao perfil\n  const descricao = mensagens[cliente.perfil] || \"possui um perfil de investimento a avaliar\";\n\n  // Gera a mensagem personalizada\n  cliente.mensagem = `Olá, ${cliente.nome}! Considerando seu perfil ${cliente.perfil.toLowerCase()}, que ${descricao}, e seu saldo de ${cliente.saldo}, identificamos os seguintes investimentos elegíveis: ${produtos || \"nenhum produto disponível\"}. Confira as condições e os riscos antes de investir.`;\n\n  // Retorna os dados do cliente\n  return {\n    json: cliente\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        240
+      ],
+      "id": "545af1b1-5c3b-4d10-89f1-2f7391162364",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3fbb50f-7542-4f17-9a3b-d9dee865b5d3",
+              "name": "nome",
+              "value": "={{ $json.nome }}",
+              "type": "string"
+            },
+            {
+              "id": "dfbf17d6-6ca1-4675-854e-e4d4f039144a",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "faa69490-b9e6-4653-8246-1056f9d69663",
+              "name": "saldo",
+              "value": "={{ $json.saldo }}",
+              "type": "string"
+            },
+            {
+              "id": "13c513ce-3795-4908-85b2-3c2bc7c64a07",
+              "name": "perfil",
+              "value": "={{ $json.perfil }}",
+              "type": "string"
+            },
+            {
+              "id": "ae3c89e9-e85a-4e23-b8b4-fbaa13f9832a",
+              "name": "investimentos",
+              "value": "={{ $json.investimentos }}",
+              "type": "array"
+            },
+            {
+              "id": "f0edc182-0aa0-448c-8efb-b20d56056865",
+              "name": "mensagem",
+              "value": "={{ $json.mensagem }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1142.0440324449594,
+        240
+      ],
+      "id": "234f7b85-1204-4513-8ddd-494ff972bda5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1328,
+        176
+      ],
+      "id": "beffab4e-6ed4-4c23-a262-ccc0d44eb7e6",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "70c84368-5139-4903-99f1-e5e71959cf2f",
+  "meta": {
+    "instanceId": "93bcc1bbc84dc3b58f7794f92650b31a3703d0bb8d3d9d59670292459e3126db"
+  },
+  "nodeGroups": [],
+  "id": "PPY3074hlEiaIDgZ",
+  "tags": []
+}
